@@ -43,8 +43,8 @@
         </style>
     </head>
     <body>
-        <%- include('./partials/header') %> 
-        <%- include('./partials/nav', { activePage: 'prescriptions' }) %>
+        <%- include('./partials/header') %> <%- include('./partials/nav', {
+        activePage: 'prescriptions' }) %>
 
         <main>
             <h1>Prescriptions</h1>
@@ -133,7 +133,11 @@
                 <tbody>
                     <% prescriptions.forEach(prescription => { %>
                     <tr>
-                        <td><%= new Date(prescription.Date).toLocaleDateString('en-US') %></td>
+                        <td>
+                            <%= new
+                            Date(prescription.Date).toLocaleDateString('en-US')
+                            %>
+                        </td>
                         <td><%= prescription.DoctorName %></td>
                         <td><%= prescription.PatientName %></td>
                         <td>
@@ -146,9 +150,15 @@
                                 >Delete</a
                             >
                             <button
-                                onclick="generateBill(<%= prescription.ID %>)"
+                                onclick="viewReceipt(<%= prescription.ID %>)"
                             >
-                                Generate Bill
+                                View Receipt
+                            </button>
+
+                            <button
+                                onclick="downloadReceipt(<%= prescription.ID %>)"
+                            >
+                                Download Receipt
                             </button>
                         </td>
                     </tr>
@@ -212,7 +222,7 @@
             }
 
             function generateBill(id) {
-                alert("Generate Bill for Prescription ID: " + id);
+
             }
 
             function confirmDelete(id) {
@@ -223,6 +233,61 @@
                 ) {
                     window.location.href = "/prescriptions/delete/" + id;
                 }
+            }
+
+            function viewReceipt(id) {
+                // Get the prescription data from the page (you can modify this to fetch the necessary data dynamically if required)
+                const prescriptionData = {
+                    prescriptionID: id,
+                    // Include any other data you need (like doctor, patient, medications, etc.)
+                };
+
+                fetch("/prescriptions/generateBill", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(prescriptionData),
+                })
+                    .then((response) => response.blob()) // Assuming the response is a PDF file
+                    .then((blob) => {
+                        const url = window.URL.createObjectURL(blob);
+                        window.open(url, "_blank"); // Open the PDF in a new tab
+                        // Cleanup URL after opening
+                        setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+                    })
+                    .catch((error) => {
+                        console.error("Error generating bill:", error);
+                    });
+            }
+
+            function downloadReceipt(id) {
+                // Get the prescription data from the page (you can modify this to fetch the necessary data dynamically if required)
+                const prescriptionData = {
+                    prescriptionID: id,
+                    // Include any other data you need (like doctor, patient, medications, etc.)
+                };
+
+                // Send POST request to your Node.js server
+                fetch("/prescriptions/generateBill", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(prescriptionData),
+                })
+                    .then((response) => response.blob()) // Assuming the response is a PDF file
+                    .then((blob) => {
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = "Prescription_Bill.pdf";
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    })
+                    .catch((error) => {
+                        console.error("Error generating bill:", error);
+                    });
             }
         </script>
     </body>

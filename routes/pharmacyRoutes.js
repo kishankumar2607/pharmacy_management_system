@@ -38,4 +38,6 @@ router.post("/prescriptions/add", pharmacyController.addPrescription);
 router.post("/prescriptions/edit/:id", pharmacyController.updatePrescription);
 router.get("/prescriptions/delete/:id", pharmacyController.deletePrescription);
 
+router.post('/prescriptions/generateBill/', pharmacyController.generateBill);
+
 module.exports = router;

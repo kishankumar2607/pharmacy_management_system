@@ -1,4 +1,5 @@
 const db = require("../db");
+const axios = require("axios");
 // Patients
 exports.getPatients = async (req, res) => {
     try {
@@ -383,3 +384,101 @@ exports.deletePrescription = async (req, res) => {
         res.status(500).send("Error deleting prescription.");
     }
 };
+
+exports.generateBill = async (req, res) => {
+    const prescriptionID = req.body.prescriptionID;
+
+    try {
+        // Fetch prescription details, doctor, and patient info
+        const [prescriptionDetails] = await db.execute(
+            `
+            SELECT 
+                Prescription.ID AS PrescriptionID, 
+                Prescription.Date AS PrescriptionDate,
+                Doctor.Name AS DoctorName, 
+                Doctor.Speciality AS DoctorSpeciality, 
+                Doctor.Address AS DoctorAddress, 
+                Patient.Name AS PatientName, 
+                Patient.Age AS PatientAge, 
+                Patient.Address AS PatientAddress
+            FROM Prescription
+            JOIN Doctor ON Prescription.DoctorID = Doctor.ID
+            JOIN Patient ON Prescription.PatientID = Patient.ID
+            WHERE Prescription.ID = ?
+            `,
+            [prescriptionID]
+        );
+
+        if (!prescriptionDetails.length) {
+            res.status(404).send('Prescription not found.');
+            return;
+        }
+
+        const prescription = prescriptionDetails[0];
+
+        // Fetch medications and calculate total
+        const [medications] = await db.execute(
+            `
+            SELECT 
+                Medication.Name AS MedicationName, 
+                Prescription_Medication.Quantity AS Quantity, 
+                Medication.Price AS UnitPrice,
+                (Prescription_Medication.Quantity * Medication.Price) AS TotalPrice
+            FROM Prescription_Medication
+            JOIN Medication ON Prescription_Medication.MedicationID = Medication.ID
+            WHERE Prescription_Medication.PrescriptionID = ?
+            `,
+            [prescriptionID]
+        );
+
+        // Calculate totals
+        const subtotal = medications.reduce((sum, med) => sum + parseFloat(med.TotalPrice), 0);
+        const taxRate = 0.13; // Assuming 13% tax
+        const total = subtotal + subtotal * taxRate;
+
+        // Prepare the data to send to the PHP script
+        const billData = {
+            pharmacy: {
+                name: 'Global Health Pharmacy',
+                address: '123 Health Lane, Wellness City, WP 45678',
+                website: 'www.globalpharmacy.com',
+                phone: '+1 (555) 123-4567',
+            },
+            prescription: {
+                id: prescription.PrescriptionID,
+                date: prescription.PrescriptionDate,
+                doctor: {
+                    name: prescription.DoctorName,
+                    speciality: prescription.DoctorSpeciality,
+                    address: prescription.DoctorAddress,
+                },
+                patient: {
+                    name: prescription.PatientName,
+                    age: prescription.PatientAge,
+                    address: prescription.PatientAddress,
+                },
+            },
+            medications,
+            totals: {
+                subtotal: subtotal.toFixed(2),
+                total: total.toFixed(2),
+            },
+        };
+
+        // Send a POST request to the PHP script
+        const phpUrl = 'http://localhost:8000/controllers/generateBill.php'; // PHP script URL
+        const response = await axios.post(phpUrl, billData, {
+            responseType: 'arraybuffer', // Treat response as binary data
+        });
+
+        console.log('Data sent to PHP:', billData);
+
+        // Send the PDF back to the client
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'inline; filename="Prescription_Bill.pdf"'); // Inline to open in new tab
+        res.send(response.data);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error generating bill.');
+    }
+}
