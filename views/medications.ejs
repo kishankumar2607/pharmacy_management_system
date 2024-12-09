@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="/styles.css" />
+        <title>Manage Medications</title>
+    </head>
+    <body>
+        <%- include('./partials/header') %> <%- include('./partials/nav', {
+        activePage: 'medications' }) %>
+
+        <main>
+            <h2>Manage Medications</h2>
+
+            <!-- Add Medication Form -->
+            <form
+                id="addMedicationForm"
+                action="/medications/add"
+                method="POST"
+            >
+                <label>
+                    Name:
+                    <input
+                        type="text"
+                        name="Name"
+                        required
+                        oninput="validateText(this)"
+                    />
+                    <span class="error"></span>
+                </label>
+                <label>
+                    Price:
+                    <input
+                        type="number"
+                        name="Price"
+                        required
+                        oninput="validateNumber(this)"
+                    />
+                    <span class="error"></span>
+                </label>
+                <button type="submit">Add Medication</button>
+            </form>
+
+            <!-- List Medications -->
+            <section id="medicationList">
+                <h3>Existing Medications</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% medications.forEach(medication => { %>
+                        <tr>
+                            <td><%= medication.Name %></td>
+                            <td><%= medication.Price %></td>
+                            <td>
+                                <a
+                                    href="/medications/edit/<%= medication.ID %>"
+                                    class="button secondary"
+                                    >Edit</a
+                                >
+                                <button
+                                    onclick="confirmDelete(<%= medication.ID %>)"
+                                >
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+
+        <%- include('./partials/footer') %>
+
+        <script>
+            function validateText(input) {
+                const error = input.nextElementSibling;
+                if (!input.value.trim()) {
+                    error.textContent = "This field is required.";
+                    input.style.borderColor = "red";
+                } else {
+                    error.textContent = "";
+                    input.style.borderColor = "";
+                }
+            }
+
+            function validateNumber(input) {
+                const error = input.nextElementSibling;
+                if (input.value < 0) {
+                    error.textContent = "Price must be positive.";
+                    input.style.borderColor = "red";
+                } else {
+                    error.textContent = "";
+                    input.style.borderColor = "";
+                }
+            }
+
+            function confirmDelete(id) {
+                const confirmDelete = confirm(
+                    "Are you sure you want to delete this medication?"
+                );
+                if (confirmDelete) {
+                    window.location.href = "/medications/delete/" + id;
+                }
+            }
+        </script>
+    </body>
+</html>

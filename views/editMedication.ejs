@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="/styles.css" />
+        <title>Edit Medication</title>
+    </head>
+    <body>
+        <%- include('./partials/header') %> <%- include('./partials/nav', {
+        activePage: 'medications' }) %>
+
+        <main>
+            <h2>Edit Medication</h2>
+
+            <!-- Edit Medication Form -->
+            <form
+                id="editMedicationForm"
+                action="/medications/edit/<%= medication.ID %>"
+                method="POST"
+            >
+                <label>
+                    Name:
+                    <input
+                        type="text"
+                        name="Name"
+                        value="<%= medication.Name %>"
+                        required
+                        oninput="validateText(this)"
+                    />
+                    <span class="error"></span>
+                </label>
+                <label>
+                    Price:
+                    <input
+                        type="number"
+                        name="Price"
+                        value="<%= medication.Price %>"
+                        required
+                        step="0.01"
+                        oninput="validateNumber(this)"
+                    />
+                    <span class="error"></span>
+                </label>
+                <button type="submit">Update Medication</button>
+            </form>
+        </main>
+
+        <%- include('./partials/footer') %>
+
+        <script>
+            function validateText(input) {
+                const error = input.nextElementSibling;
+                if (!input.value.trim()) {
+                    error.textContent = "This field is required.";
+                    input.style.borderColor = "red";
+                } else {
+                    error.textContent = "";
+                    input.style.borderColor = "";
+                }
+            }
+
+            function validateNumber(input) {
+                const error = input.nextElementSibling;
+                if (input.value < 0) {
+                    error.textContent = "Price must be positive.";
+                    input.style.borderColor = "red";
+                } else {
+                    error.textContent = "";
+                    input.style.borderColor = "";
+                }
+            }
+        </script>
+    </body>
+</html>

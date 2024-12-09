@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link rel="stylesheet" href="/styles.css" />
+        <title>Edit Doctor</title>
+    </head>
+    <body>
+        <%- include('./partials/header') %> <%- include('./partials/nav', {
+        activePage: 'doctors' }) %>
+
+        <main>
+            <h2>Edit Doctor Details</h2>
+
+            <!-- Edit Doctor Form -->
+            <form id="editDoctorForm" action="/doctors/edit/<%= doctor.ID %>" method="POST">
+                <label>
+                    Name:
+                    <input
+                        type="text"
+                        name="Name"
+                        value="<%= doctor.Name %>"
+                        required
+                        oninput="validateText(this)"
+                    />
+                    <span class="error"></span>
+                </label>
+                <label>
+                    Speciality:
+                    <input
+                        type="text"
+                        name="Speciality"
+                        value="<%= doctor.Speciality %>"
+                        required
+                        oninput="validateText(this)"
+                    />
+                    <span class="error"></span>
+                </label>
+                <label>
+                    Address:
+                    <input
+                        type="text"
+                        name="Address"
+                        value="<%= doctor.Address %>"
+                        required
+                    />
+                    <span class="error"></span>
+                </label>
+                <button type="submit">Update Doctor</button>
+            </form>
+        </main>
+
+        <%- include('./partials/footer') %>
+
+        <script>
+            function validateText(input) {
+                const error = input.nextElementSibling;
+                if (!input.value.trim()) {
+                    error.textContent = "This field is required.";
+                    input.style.borderColor = "red";
+                } else {
+                    error.textContent = "";
+                    input.style.borderColor = "";
+                }
+            }
+        </script>
+    </body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Prescriptions</title>
+        <link rel="stylesheet" href="/styles.css" />
+        <style>
+            .medication-item {
+                display: flex;
+                align-items: center;
+                margin-bottom: 10px;
+            }
+            .medication-item label {
+                width: 100px;
+                margin-right: 10px;
+            }
+            .medication-item select,
+            .medication-item input {
+                margin-right: 10px;
+                margin-left: 5px;
+                width: 400px;
+                margin-bottom: 0;
+            }
+            .medication-item button {
+                margin-top: 25px;
+                background-color: red;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                cursor: pointer;
+                width: 100px;
+            }
+            #add-medication-btn {
+                margin-top: 10px;
+                padding: 10px 20px;
+                background-color: rgba(0, 128, 0, 0.182);
+                color: green;
+                border: none;
+                cursor: pointer;
+                width: 300px;
+            }
+        </style>
+    </head>
+    <body>
+        <%- include('./partials/header') %> 
+        <%- include('./partials/nav', { activePage: 'prescriptions' }) %>
+
+        <main>
+            <h1>Prescriptions</h1>
+
+            <!-- Add Prescription Form -->
+            <form action="/prescriptions/add" method="POST">
+                <h2>Add Prescription</h2>
+
+                <!-- Prescription Date -->
+                <label for="date">Prescription Date:</label>
+                <input
+                    type="date"
+                    id="date"
+                    name="date"
+                    max="<%= new Date().toISOString().split('T')[0] %>"
+                    required
+                />
+
+                <!-- Patient Dropdown -->
+                <label for="patient">Select Patient:</label>
+                <select name="patientID" id="patient" required>
+                    <% patients.forEach(patient => { %>
+                    <option value="<%= patient.ID %>">
+                        <%= patient.Name %>
+                    </option>
+                    <% }); %>
+                </select>
+
+                <!-- Doctor Dropdown -->
+                <label for="doctor">Select Doctor:</label>
+                <select name="doctorID" id="doctor" required>
+                    <% doctors.forEach(doctor => { %>
+                    <option value="<%= doctor.ID %>"><%= doctor.Name %></option>
+                    <% }); %>
+                </select>
+
+                <!-- Medication Dropdowns -->
+                <h3>Medications</h3>
+                <div id="medications-container">
+                    <div class="medication-item" id="medication-0">
+                        <label for="medication0">Medication 1:</label>
+                        <select name="medication0" id="medication0" required>
+                            <option value="">Please select a medication</option>
+                            <% medications.forEach(medication => { %>
+                            <option value="<%= medication.ID %>">
+                                <%= medication.Name %>
+                            </option>
+                            <% }); %>
+                        </select>
+                        <label for="count0">Count:</label>
+                        <input
+                            type="number"
+                            name="count0"
+                            id="count0"
+                            min="1"
+                            max="5"
+                            value="1"
+                            required
+                        />
+                    </div>
+                </div>
+
+                <!-- Add Medication Button -->
+                <button
+                    type="button"
+                    id="add-medication-btn"
+                    onclick="addMedication()"
+                >
+                    Add another medication
+                </button>
+
+                <button type="submit">Add Prescription</button>
+            </form>
+
+            <!-- List Prescriptions -->
+            <h2>Prescriptions List</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Prescription Date</th>
+                        <th>Prescribed By</th>
+                        <th>Prescribed To</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% prescriptions.forEach(prescription => { %>
+                    <tr>
+                        <td><%= new Date(prescription.Date).toLocaleDateString('en-US') %></td>
+                        <td><%= prescription.DoctorName %></td>
+                        <td><%= prescription.PatientName %></td>
+                        <td>
+                            <a href="/prescriptions/edit/<%= prescription.ID %>"
+                                >Edit</a
+                            >
+                            <a
+                                href="#"
+                                onclick="confirmDelete(<%= prescription.ID %>)"
+                                >Delete</a
+                            >
+                            <button
+                                onclick="generateBill(<%= prescription.ID %>)"
+                            >
+                                Generate Bill
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="4" class="medication-subtitle">
+                            <%= prescription.Medications %>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </main>
+
+        <script>
+            let medicationCount = 1; // Start with 1 medication
+
+            function addMedication() {
+                if (medicationCount < 5) {
+                    medicationCount++;
+                    // Create a new medication row
+                    const newRow = document.createElement("div");
+                    newRow.classList.add("medication-item");
+                    newRow.id = `medication-${medicationCount}`;
+                    newRow.innerHTML = `
+                        <label for="medication${medicationCount}">Medication ${
+                        medicationCount + 1
+                    }:</label>
+                        <select name="medication${medicationCount}" id="medication${medicationCount}" required>
+                            <option value="">Please select a medication</option>
+                            <% medications.forEach(medication => { %>
+                            <option value="<%= medication.ID %>">
+                                <%= medication.Name %>
+                            </option>
+                            <% }); %>
+                        </select>
+                        <label for="count${medicationCount}">Count:</label>
+                        <input type="number" name="count${medicationCount}" id="count${medicationCount}" min="1" max="5" value="1" required />
+                        <button type="button" onclick="removeMedication(${medicationCount})">Delete</button>
+                    `;
+                    document
+                        .getElementById("medications-container")
+                        .appendChild(newRow);
+
+                    if (medicationCount === 5) {
+                        document.getElementById(
+                            "add-medication-btn"
+                        ).style.display = "none";
+                    }
+                }
+            }
+
+            function removeMedication(index) {
+                const row = document.getElementById(`medication-${index}`);
+                row.remove();
+                medicationCount--;
+                if (medicationCount < 5) {
+                    document.getElementById(
+                        "add-medication-btn"
+                    ).style.display = "inline-block";
+                }
+            }
+
+            function generateBill(id) {
+                alert("Generate Bill for Prescription ID: " + id);
+            }
+
+            function confirmDelete(id) {
+                if (
+                    confirm(
+                        "Are you sure you want to delete this prescription?"
+                    )
+                ) {
+                    window.location.href = "/prescriptions/delete/" + id;
+                }
+            }
+        </script>
+    </body>
+</html>
