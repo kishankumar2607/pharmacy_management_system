@@ -31,9 +31,9 @@ To set up and run the project on your local system, follow these steps:
    Open **XAMPP** and ensure Apache and MySQL services are running.  
 
 2. **Set Up the FPDF Library:**  
-   a. Download the FPDF library from [fpdf.org](http://www.fpdf.org/).  
+   a. Download the FPDF library from [fpdf.org](http://www.fpdf.org/). A copy of fpdf library used during the development of this project is included in the root folder.
    b. Ensure the FPDF library is located in the default `include_path`.  
-   c. Alternatively, modify the `php.ini` file to include the path to the FPDF library by adding the following line:  
+   c. Alternatively, You can modify the `php.ini` file to include the path to the FPDF library by adding the following line:  
       ```
       include_path = ".:/path/to/fpdf/library"
       ```  
