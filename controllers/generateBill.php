@@ -21,7 +21,7 @@ $pharmacyPhone = $data['pharmacy']['phone'];
 $formattedDate = date('d M Y', strtotime($prescriptionDate));
 
 // Generate PDF using FPDF
-require('fpdf/fpdf.php');
+require('../fpdf/fpdf.php');
 $pdf = new FPDF();
 $pdf->AddPage();
 $pdf->SetFont('Arial', 'B', 16);
